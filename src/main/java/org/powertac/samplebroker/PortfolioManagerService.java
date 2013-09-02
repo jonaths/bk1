@@ -115,6 +115,8 @@ implements PortfolioManager, Initializable, Activatable
   public PortfolioManagerService ()
   {
     super();
+    /** DEBUG **/
+    System.out.println("DEBUG PortfolioManagerService");
   }
 
   /**
@@ -124,6 +126,10 @@ implements PortfolioManager, Initializable, Activatable
   @SuppressWarnings("unchecked")
   public void initialize (BrokerContext broker)
   {
+
+    /** DEBUG **/
+    System.out.println("DEBUG initialize");  
+    
     this.broker = broker;
     customerProfiles = new HashMap<PowerType,
         HashMap<CustomerInfo, CustomerRecord>>();
@@ -148,8 +154,11 @@ implements PortfolioManager, Initializable, Activatable
   CustomerRecord getCustomerRecordByPowerType (PowerType type,
                                                CustomerInfo customer)
   {
-    HashMap<CustomerInfo, CustomerRecord> customerMap =
-        customerProfiles.get(type);
+      /** DEBUG **/
+      //System.out.println("DEBUG getCustomerRecordByPowerType");
+    
+      HashMap<CustomerInfo, CustomerRecord> customerMap =
+      customerProfiles.get(type);
     if (customerMap == null) {
       customerMap = new HashMap<CustomerInfo, CustomerRecord>();
       customerProfiles.put(type, customerMap);
@@ -169,6 +178,9 @@ implements PortfolioManager, Initializable, Activatable
   CustomerRecord getCustomerRecordByTariff (TariffSpecification spec,
                                             CustomerInfo customer)
   {
+      /** DEBUG **/
+      //System.out.println("DEBUG getCustomerRecordByTariff");
+ 
     HashMap<CustomerInfo, CustomerRecord> customerMap =
         customerSubscriptions.get(spec);
     if (customerMap == null) {
@@ -177,7 +189,7 @@ implements PortfolioManager, Initializable, Activatable
     }
     CustomerRecord record = customerMap.get(customer);
     if (record == null) {
-      // seed with the generic record for this customer
+      // seed with the generic record for thiscustomer
       record =
           new CustomerRecord(getCustomerRecordByPowerType(spec.getPowerType(),
                                                           customer));
@@ -191,6 +203,9 @@ implements PortfolioManager, Initializable, Activatable
    */
   List<TariffSpecification> getCompetingTariffs (PowerType powerType)
   {
+      /** DEBUG **/
+      System.out.println("DEBUG getCompetingTariffs");
+
     List<TariffSpecification> result = competingTariffs.get(powerType);
     if (result == null) {
       result = new ArrayList<TariffSpecification>();
@@ -204,6 +219,10 @@ implements PortfolioManager, Initializable, Activatable
    */
   private void addCompetingTariff (TariffSpecification spec)
   {
+    
+    /** DEBUG **/
+    System.out.println("DEBUG addCompetingTariff"); 
+    
     getCompetingTariffs(spec.getPowerType()).add(spec);
   }
 
@@ -230,6 +249,9 @@ implements PortfolioManager, Initializable, Activatable
    */
   public void handleMessage (CustomerBootstrapData cbd)
   {
+      /** DEBUG **/
+      System.out.println("DEBUG handleMessage CustBData");
+
     CustomerInfo customer =
             customerRepo.findByNameAndPowerType(cbd.getCustomerName(),
                                                 cbd.getPowerType());
@@ -250,6 +272,9 @@ implements PortfolioManager, Initializable, Activatable
    */
   public void handleMessage (TariffSpecification spec)
   {
+      /** DEBUG **/ 
+      System.out.println("DEBUG handleMessage TariffSpec"); 
+
     Broker theBroker = spec.getBroker();
     if (broker.getBrokerUsername() == theBroker.getUsername()) {
       // if it's ours, just log it
@@ -279,6 +304,10 @@ implements PortfolioManager, Initializable, Activatable
    */
   public void handleMessage(TariffTransaction ttx)
   {
+
+      /** DEBUG **/
+      //System.out.println("DEBUG handleMessage TariffTransaction");  
+      
     // make sure we have this tariff
     TariffSpecification newSpec = ttx.getTariffSpec();
     if (newSpec == null) {
@@ -339,6 +368,11 @@ implements PortfolioManager, Initializable, Activatable
   @Override // from Activatable
   public void activate (int timeslotIndex)
   {
+      /** DEBUG **/
+      System.out.println("DEBUG activate " + 
+			 timeslotRepo.currentTimeslot().getSerialNumber() );  
+
+      
     if (customerSubscriptions.size() == 0) {
       // we have no tariffs
       createInitialTariffs();
@@ -353,6 +387,10 @@ implements PortfolioManager, Initializable, Activatable
   // fixed-rate two-part tariffs that give the broker a fixed margin.
   private void createInitialTariffs ()
   {
+
+      /** DEBUG **/ 
+      System.out.println("DEBUG createInitialTariffs"); 
+
     // remember that market prices are per mwh, but tariffs are by kwh
     double marketPrice = marketManager.getMeanMarketPrice() / 1000.0;
     // for each power type representing a customer population,
@@ -367,6 +405,7 @@ implements PortfolioManager, Initializable, Activatable
         rateValue = -2.0 * marketPrice;
       if (pt.isInterruptible())
         rateValue *= 0.7; // Magic number!! price break for interruptible
+      
       TariffSpecification spec =
           new TariffSpecification(broker.getBroker(), pt)
               .withPeriodicPayment(defaultPeriodicPayment);
@@ -385,9 +424,14 @@ implements PortfolioManager, Initializable, Activatable
   // Checks to see whether our tariffs need fine-tuning
   private void improveTariffs()
   {
+
+      /** DEBUG **/
+      System.out.println("DEBUG improveTariffs"); 
+
     // quick magic-number hack to inject a balancing order
     int timeslotIndex = timeslotRepo.currentTimeslot().getSerialNumber();
-    if (371 == timeslotIndex) {
+    if (395 == timeslotIndex) {
+	System.out.println("en 395");
       for (TariffSpecification spec : tariffRepo.findAllTariffSpecifications()) {
         if (PowerType.INTERRUPTIBLE_CONSUMPTION == spec.getPowerType()) {
           BalancingOrder order = new BalancingOrder(broker.getBroker(),
@@ -399,7 +443,7 @@ implements PortfolioManager, Initializable, Activatable
       }
     }
     // magic-number hack to supersede a tariff
-    if (380 == timeslotIndex) {
+    if (400 == timeslotIndex) {
       // find the existing CONSUMPTION tariff
       TariffSpecification oldc = null;
       List<TariffSpecification> candidates =
