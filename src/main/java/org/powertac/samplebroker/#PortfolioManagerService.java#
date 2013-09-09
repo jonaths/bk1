@@ -227,7 +227,7 @@ implements PortfolioManager, Initializable, Activatable
   }
 
   /**
-   * Returns total usage for a given timeslot (represented as a simple index).
+   * Returns total usage for a given timeslot (f represented as a simple index).
    */
   @Override
   public double collectUsage (int index)
@@ -251,6 +251,7 @@ implements PortfolioManager, Initializable, Activatable
   {
       /** DEBUG **/
       System.out.println("DEBUG handleMessage CustBData");
+
 
     CustomerInfo customer =
             customerRepo.findByNameAndPowerType(cbd.getCustomerName(),
@@ -287,6 +288,9 @@ implements PortfolioManager, Initializable, Activatable
     else {
       // otherwise, keep track
       addCompetingTariff(spec);
+
+
+
     }
   }
   
